@@ -1,1 +1,1 @@
-A coursera cours eon object oriented programming
+A coursera course on object oriented programming. 
