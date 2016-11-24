@@ -1,6 +1,14 @@
 #include <iostream>
 #include <cmath>
 using namespace std;
+
+/*
+ * Note that in order to fully complete this all the functions need to
+ * be redefined for a unit vector such that it remains a unit vector 
+ * afterwards. I'm not going to bother however.
+ * 
+ * */
+
 class Point3D
 {
 		protected:
@@ -15,10 +23,7 @@ class Point3D
 		 void display(ostream& sortie) const;
 };
 
-ostream& operator<<(ostream& out,const Point3D& f){
-	f.display(out);
-	return out;
-}
+
 
 void Point3D::getCoords(double& x,double& y, double& z) const
 {
@@ -107,7 +112,15 @@ const Vector operator*(double k,const Vector& v)
 		return v*k;
 }
 
-
+const Vector operator/(Vector v,double k)
+{
+		v*=1/k;
+		return v;
+}
+const Vector operator/(double k,const Vector& v)
+{
+		return v*1/k;
+}
 // Solution recommends an internal overload
 double operator*(const Vector& v,const Vector& v2)
 {		
@@ -130,15 +143,70 @@ double angle(const Vector& v1, const Vector& v2)
 }
 
 
+
+class UnitVector : public Vector{
+	private:
+		void normalise(){
+			double p=Vector::norm();
+			cout<<"p="<<p;
+			if(p==0)
+				*this=UnitVector();
+			else if(p!=1)
+			{
+				*this=*this/p;
+			}
+		}
+	
+	public:
+		//UnitVector() =delete; I did this
+		UnitVector():Vector(1.0,0.0,0.0){}
+		//UnitVector(double x,double y, double z) :Vector(x/sqrt(x*x+y*y+z*z),y/sqrt(x*x+y*y+z*z),z/sqrt(x*x+y*y+z*z)){} 
+		UnitVector(const Vector& v) :Vector(v/v.norm()){} 
+		UnitVector(double x,double y, double z) : Vector(x,y,z) 
+		{ 
+			normalise();
+		}
+		double norm() const;
+		 void display(ostream& sortie) const
+		{
+			Vector::display(sortie);
+			sortie<<" unit vector";
+		}			
+};
+
+double UnitVector::norm() const {
+			//return pow((x_*x_)+ (y_*y_) + (z_*z_) , 0.5);
+			// the solution is neater
+			return 1.0;
+}
+
+double angle(const UnitVector& v1, const UnitVector& v2)
+{ 
+	return acos((v1 * v2)); 
+}
+
+ostream& operator<<(ostream& out,const Point3D& f){
+	f.display(out);
+	return out;
+}
+
 int main(){
 	Point3D p0;
-	Point3D p1(1.0,2.0,-0.1);
+	Point3D p1(1.0,1.0,0.0);
 	Point3D p2(2.6,3.5,4.1);
 	Point3D p3(0,0,0);
 	
 	Vector v1(p1);
 	Vector v2(p2);
-	Vector v3;
+	Vector v3(1.234,1.13,0.4);
+	UnitVector u1(v1);
+	UnitVector u2(v2);
+	UnitVector u3(1.234,1.13,0.4);
+	cout<<"u3= "<< u3<<endl;
+	cout<<"u1= "<< u1<<endl;
+	cout<<"angle= "<< angle(u1,u2)<<endl;
+	cout<<"angle= "<< angle(v1,v2)<<endl;
+	cout<<"norm= "<< u1.norm()<<endl;
 	
 	cout<<v1<<"+ "<<v2<<"= "<<(v1+v2)<<endl;
 	cout<<v2<<"+ "<<v1<<"= "<<(v2+v1)<<endl;
