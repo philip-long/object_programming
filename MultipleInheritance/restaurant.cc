@@ -25,7 +25,7 @@ string Produit::getUnite() const{
 	return units_;
 }
 string Produit::toString() const{
-	return name_;
+	return units_+" "<<de<<" "<<name;
 }
 //======================================================================
 class Ingredient{
@@ -49,13 +49,14 @@ double Ingredient::getQuantite() const {
 }
 
 void Ingredient::descriptionAdaptee() {
+	cout<<quantity<" "<<product.toString();
 	
 }
 
 //======================================================================
 class Recette{
 	private :
-		vector<Ingredient* > i;
+		vector<Ingredient* > container;
 		string name_;
 		unsigned int nbFois_;
 	public:
@@ -66,17 +67,56 @@ class Recette{
 		void toString() const ;
 
 };
+
+void Recette::adjouter(const Produit& p,double quantite)
+{
+	container.push_back(new Ingredient(p,quantite*nbFois_));
+}
+
+Recette Recette::adapter(double n){
+	// Create a copy
+	Recette R(name_,nbFois_*n)
+	for(auto i:container)
+	{
+		// copy ingredients
+		R.adjouter(i,i.getQuantite*n);
+	}
+	return Recette;
+}
+
+void toString() const {
+	cout<<"Recette \""<<name<<"\" x "<<nbFois_;
+	for(auto i: container)
+	{
+		cout<<endl;
+		cout<<"1."<<i.descriptionAdaptee()
+	}
+}
+
 //======================================================================
-class ProduitCuisine : public Produit{
+class ProduitCuisine : public Produit {
 	private :
+		Recette recipe;
 	public:
 		ProduitCuisine(string name,string units_="portion(s)") :
-			Produit(name,units_) {}
+			Produit(name,units_),recipe(name) {}
+			
 		void ajouterARecette(const Produit& produit,double quantite);
+		
 		const ProduitCuisine* adapter(double n);
+		
 		toString() const;
+		
 };
 
+void ajouterARecette(const Produit& produit,double quantite){
+	recipe.adjouter(const Produit& produit,double quantite)
+}
+const ProduitCuisine* adapter(double n){
+	r.adapter(double n);
+}
+
+//======================================================================
 
 /*******************************************
  * Ne rien modifier après cette ligne.
