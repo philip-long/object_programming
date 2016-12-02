@@ -105,16 +105,19 @@ class ProduitCuisine : public Produit {
 		
 		const ProduitCuisine* adapter(double n);
 		
-		toString() const;
+		void toString() const;
 		
 };
 
-void ajouterARecette(const Produit& produit,double quantite){
+void ProduitCuisine::ajouterARecette(const Produit& produit,double quantite){
 	recipe.adjouter(const Produit& produit,double quantite)
 }
-const ProduitCuisine* adapter(double n){
-	r.adapter(double n);
+const ProduitCuisine::ProduitCuisine* adapter(double n){
+	r=r.adapter(double n);
+	return this;
 }
+void ProduitCuisine::toString
+
 
 //======================================================================
 
