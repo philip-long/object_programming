@@ -12,10 +12,13 @@ class Produit{
 		string name_;
 		string units_;
 	public:
-		Produit(string name,sting unit="") : name_(name),unit_(unit) {}
+		Produit(string name,string unit="") : name_(name),units_(unit) {}
 		string getNom() const;
 		string getUnite() const;
-		string toString() const;
+		virtual string toString() const;
+		virtual const Produit* adapter(double n) const;
+		virtual double quantiteTotale(const string& nomProduit) const;
+		virtual void test_function() const {cout<<"**Product**"<<endl;} 
 };
 
 string Produit::getNom() const{
@@ -25,32 +28,61 @@ string Produit::getUnite() const{
 	return units_;
 }
 string Produit::toString() const{
-	return units_+" "<<de<<" "<<name;
+	//return units_+" "+"de"+" "+name_;
+	return name_;
 }
+
+const Produit* Produit::adapter(double n) const{	
+	// Since this does not change return directly
+	return this;
+}
+double Produit::quantiteTotale(const string& nomProduit) const{
+	if(nomProduit==name_)
+	{
+		return 1.0;
+	}
+	else
+	{
+		return 0.0;
+	}
+}
+
 //======================================================================
 class Ingredient{
 		private:
-			const Produit product;
+			const Produit& product;
 			double quantity;
 		public:
 		Ingredient(const Produit& p, double quantity)
-			: product(p),quantity(quantity) {}
+			: product(p),quantity(quantity) 
+			{
+			}
 			const Produit& getProduit() const;
 			double getQuantite() const ;
-			void descriptionAdaptee() const;
+			string descriptionAdaptee() const;
+			double quantiteTotale(const string& nomProduit);
 		
 };
 const Produit& Ingredient::getProduit() const
 {
 	return product;
 }
-double Ingredient::getQuantite() const {
+double Ingredient::getQuantite() const{
 	return quantity;
 }
 
-void Ingredient::descriptionAdaptee() {
-	cout<<quantity<" "<<product.toString();
+string Ingredient::descriptionAdaptee() const{
+	stringstream strs;
+	cout.precision(6);
+	strs << fixed << quantity;
+	std::string str = strs.str();
+	const Produit* p=product.adapter(quantity);
+	return str+" "+ p->getUnite()+ " de " + p->toString();
 	
+}
+
+double Ingredient::quantiteTotale(const string& nomProduit){
+	return getQuantite()*product.quantiteTotale(nomProduit);
 }
 
 //======================================================================
@@ -58,68 +90,133 @@ class Recette{
 	private :
 		vector<Ingredient* > container;
 		string name_;
-		unsigned int nbFois_;
+		double nbFois_;
 	public:
-		Recette(string name,unsigned int number_of_times=1)		
-			: name_(name),nbFois_(number_of_times) {}
-		void ajouter(const Produit& p,double quantite);
-		Recette adapter(double n);
-		void toString() const ;
+		Recette(string name,double number_of_times=1)		
+			: name_(name),nbFois_(number_of_times)
+			 {
+				 //cout<<"Creating Recipe "<<name_<<" numbers "<<nbFois_<<endl;
+				 }
+		void ajouter(const Produit& p,double quantite) ;
+		const Recette adapter(double n) const;
+		string toString() const ;
+		double quantiteTotale(const string& nomProduit) const;
 
 };
 
-void Recette::adjouter(const Produit& p,double quantite)
+void Recette::ajouter(const Produit& p,double quantite) 
 {
-	container.push_back(new Ingredient(p,quantite*nbFois_));
+	//container.push_back(new Ingredient(p,quantite*nbFois_));
+	container.push_back(new Ingredient(p,quantite));
+	//container.push_back(new Ingredient(p,quantite*nbFois_));
 }
 
-Recette Recette::adapter(double n){
+const Recette Recette::adapter(double n) const{
 	// Create a copy
-	Recette R(name_,nbFois_*n)
+	
+	Recette R(name_,nbFois_*n);
 	for(auto i:container)
 	{
-		// copy ingredients
-		R.adjouter(i,i.getQuantite*n);
+		// copy ingredients *nbFois_
+		R.ajouter(i->getProduit(),i->getQuantite()*nbFois_*n);
+		//R.ajouter(i->getProduit(),i->getQuantite());
 	}
-	return Recette;
+	return R;
 }
 
-void toString() const {
-	cout<<"Recette \""<<name<<"\" x "<<nbFois_;
+string Recette::toString() const {
+		
+	string returnString;
+	ostringstream stringnbFois_;
+	stringnbFois_ << nbFois_;
+	string strnbFois = stringnbFois_.str();
+	
+	returnString="Recette \""+name_+"\" x "+strnbFois+":";
+	int Counter=1;
+	
 	for(auto i: container)
 	{
-		cout<<endl;
-		cout<<"1."<<i.descriptionAdaptee()
+		
+		ostringstream stringCounter;
+		stringCounter << Counter;
+		string str = stringCounter.str();
+		returnString+="\n";
+		returnString+=" "+str +". ";
+		returnString+=i->descriptionAdaptee();
+		Counter++;
 	}
+	return returnString;
 }
 
+// A recurisve function
+double Recette::quantiteTotale(const string& nomProduit) const{
+	double quantity_of_product=0.0;
+	
+	for(auto i:container)
+	{
+		if(i->getProduit().quantiteTotale(nomProduit)==1)
+		{
+			double q=i->getQuantite();
+			quantity_of_product+=q;
+		}
+		else
+		{
+			
+			double q=i->getQuantite()*i->getProduit().quantiteTotale(nomProduit);	
+			quantity_of_product+=q;
+			
+		}
+
+	}
+	return quantity_of_product*nbFois_;
+}
 //======================================================================
 class ProduitCuisine : public Produit {
 	private :
 		Recette recipe;
 	public:
 		ProduitCuisine(string name,string units_="portion(s)") :
-			Produit(name,units_),recipe(name) {}
+			Produit(name,units_),recipe(name) { 
+				}
 			
-		void ajouterARecette(const Produit& produit,double quantite);
+		void ajouterARecette(const Produit& produit,double quantite) ;
 		
-		const ProduitCuisine* adapter(double n);
+		const ProduitCuisine* adapter(double n) const;
 		
-		void toString() const;
-		
+		virtual string toString() const;
+		virtual double quantiteTotale(const string& nomProduit) const;
+		virtual void test_function() const {cout<<"**Cooked Product**"<<endl;}
 };
 
-void ProduitCuisine::ajouterARecette(const Produit& produit,double quantite){
-	recipe.adjouter(const Produit& produit,double quantite)
+void ProduitCuisine::ajouterARecette(const Produit& produit,double quantite){	
+	recipe.ajouter(produit,quantite);
 }
-const ProduitCuisine::ProduitCuisine* adapter(double n){
-	r=r.adapter(double n);
-	return this;
+const ProduitCuisine* ProduitCuisine::adapter(double n) const{
+	// So I must find a way to change the recipe while not changing this product
+	// this line is confusing only way I could make it work
+	ProduitCuisine *p = new ProduitCuisine(name_);
+	p->recipe=recipe.adapter(n);
+	
+	return p;
 }
-void ProduitCuisine::toString
+string ProduitCuisine::toString() const{
+	return Produit::toString()+"\n"+recipe.toString();
+}
 
-
+double ProduitCuisine::quantiteTotale(const string& nomProduit) const{
+	if(nomProduit==name_)
+	{
+		return 1.0;
+	}
+	else
+	{		
+		return recipe.quantiteTotale(nomProduit);
+	}
+}
 //======================================================================
+
+
+
 
 /*******************************************
  * Ne rien modifier après cette ligne.
